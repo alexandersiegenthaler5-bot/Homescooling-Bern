@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berner Homeschooling-Plattform Pro</title>
+    <!-- Tailwind CSS für modernes, sauberes Design -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <div class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-blue-950 tracking-tight mb-2">Berner Homeschooling-Plattform Pro</h1>
+            <p class="text-lg text-gray-600">Rechtssichere Antragsdokumente & Wochenpläne nach Lehrplan 21 (Kanton Bern)</p>
+        </header>
+
+        <!-- Navigation Tabs (Optimiert als klar ersichtliche Buttons) -->
+        <div class="flex flex-col sm:flex-row justify-center gap-4 mb-8 bg-gray-100 p-2 rounded-2xl max-w-2xl mx-auto shadow-inner border border-gray-200">
+            <button onclick="switchTab('planer')" id="tab-planer" class="flex-1 py-3 px-6 font-bold text-center rounded-xl transition-all duration-200 text-lg shadow-sm cursor-pointer bg-blue-950 text-white border border-blue-900">
+                1. Wochenplan-Generator
+            </button>
+            <button onclick="switchTab('antrag')" id="tab-antrag" class="flex-1 py-3 px-6 font-bold text-center rounded-xl transition-all duration-200 text-lg shadow-sm cursor-pointer bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-blue-950">
+                2. Berner Behörden-Antrag
+            </button>
+        </div>
+
+        <!-- REITER 1: WOCHENPLAN GENERATOR -->
+        <div id="content-planer" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Formular (Links) -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-5">
+                <h2 class="text-xl font-bold text-blue-900 border-b pb-2">Stammdaten & Parameter</h2>
+                
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Vorname Schüler*in</label>
+                    <input type="text" id="schuelerName" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500 text-gray-400 focus:text-gray-800" value="Max Muster" oninput="generatePrompt()">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Begleitende Lehrperson (Mentorat)</label>
+                    <input type="text" id="lehrpersonName" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500" placeholder="z.B. Frau M. Müller (Lehrpatent BE)" oninput="generatePrompt()">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Klassenstufe</label>
+                        <select id="klasse" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5" onchange="updateInfo()">
+                            <option value="1">1. Klasse</option>
+                            <option value="2">2. Klasse</option>
+                            <option value="3">3. Klasse</option>
+                            <option value="4">4. Klasse</option>
+                            <option value="5" selected>5. Klasse</option>
+                            <option value="6">6. Klasse</option>
+                            <option value="7">7. Klasse</option>
+                            <option value="8">8. Klasse</option>
+                            <option value="9">9. Klasse</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Quartal</label>
+                        <select id="quartal" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5" onchange="generatePrompt()">
+                            <option value="Q1">Q1 (Aug-Okt)</option>
+                            <option value="Q2">Q2 (Nov-Jan)</option>
+                            <option value="Q3">Q3 (Jan-Apr)</option>
+                            <option value="Q4">Q4 (Apr-Jul)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Wochenthema / Fokus</label>
+                    <textarea id="themen" rows="3" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5" placeholder="z.B. Mathematik: Brüche im Alltag anwenden" oninput="generatePrompt()"></textarea>
+                </div>
+            </div>
+
+            <!-- Output & Action (Rechts) -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex justify-between items-center text-sm text-blue-900">
+                    <div>📍 <span class="font-bold">Kanton Bern:</span> Gesetzliches Soll für Klasse <span id="lblKlasse">5</span>: <span id="infoLektionen" class="font-bold">27-31 Lektionen</span> (<span id="infoZeit">ca. 4.5 Stunden/Tag</span>)</div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                        <h3 class="text-lg font-bold text-gray-900">Generierter prompt für Gemini (Getarnt als Lehrperson)</h3>
+                        
+                        <div class="flex space-x-2 w-full sm:w-auto">
+                            <button onclick="copyPrompt()" id="copyBtn" class="flex-1 sm:flex-initial text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-xl border border-gray-200 transition-colors cursor-pointer">
+                                📋 Kopieren
+                            </button>
+                            <button onclick="sendToGemini()" class="flex-1 sm:flex-initial text-sm bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-xl transition-colors shadow-md cursor-pointer flex items-center justify-center gap-1">
+                                🚀 An Gemini senden
+                            </button>
+                        </div>
+                    </div>
+                    <pre id="promptOutput" class="bg-gray-950 text-gray-200 p-4 rounded-xl text-xs overflow-x-auto whitespace-pre-wrap h-80 border border-gray-800 font-mono text-left"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- REITER 2: BEHÖRDEN ANTRAG -->
+        <div id="content-antrag" class="hidden space-y-8">
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-amber-900">
+                <h3 class="text-xl font-bold mb-2">⚠️ Wichtig für das Berner Bewilligungsverfahren</h3>
+                <p class="text-sm leading-relaxed">
+                    Im Kanton Bern ist Homeschooling meldepflichtig (für die ersten zwei Jahre) und danach <strong>streng bewilligungspflichtig</strong>. Das Schulinspektorat verlangt ein vollständiges Dossier. Reiche die Unterlagen frühzeitig bei der zuständigen Gemeinde/Inspektorat ein.
+                </p>
+            </div>
+
+            <!-- Hauptbereich Antragstellung -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Checkliste Dokumente -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                    <h3 class="text-xl font-bold text-blue-950 border-b pb-2">📋 Erforderliche Antrags-Beilagen</h3>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex items-start gap-2">
+                            <input type="checkbox" class="mt-1">
+                            <div><strong>Offizielles Gesuchsformular & Merkblatt:</strong> Zu finden direkt bei der <a href="https://www.schulaufsicht.bkd.be.ch/de/start/themen/private-schulung.html" target="_blank" class="text-blue-600 hover:underline font-semibold">Schulaufsicht der BKD Bern</a>.</div>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <input type="checkbox" class="mt-1">
+                            <div><strong>Bestätigung der anleitenden Lehrperson:</strong> Schriftlicher Vertrag/Bestätigung über die pädagogische Begleitung (sofern die Eltern kein eigenes Patent besitzen).</div>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <input type="checkbox" class="mt-1">
+                            <div><strong>Lehrmittelverzeichnis:</strong> Nachweis über den Erwerb offizieller, lehrplankonformer Medien über den <a href="https://shop.schulverlag.ch/de/" target="_blank" class="text-blue-600 hover:underline font-semibold">Schulverlag Plus</a>.</div>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <input type="checkbox" class="mt-1">
+                            <div><strong>Exemplarisches Wochenkonzept:</strong> Genau hierfür nutzt du das Sheet aus Reiter 1!</div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Interaktiver Begründungs-Formulargenerator -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                    <h3 class="text-xl font-bold text-blue-950 border-b pb-2">📝 Pädagogische Begründung (Motivationsschreiben)</h3>
+                    <p class="text-xs text-gray-500">Das Inspektorat verlangt eine Erklärung, warum das Kind privat unterrichtet wird und wie die soziale Integration (Vereine, Kontakte) stattfindet.</p>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Grund für das Homeschooling (Exemplarischer Vorlagesatz)</label>
+                            <textarea id="antragGrund" rows="3" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2 text-sm focus:ring-blue-500 focus:border-blue-500 text-gray-700">VSG2.2. 3. Sie fördert das physische, psychische und soziale Wohlbefinden der Schülerinnen und Schüler und schützt ihre seelisch-geistige und körperliche Integrität. Sie sorgt für ein Klima von Achtung und Vertrauen. * ist nicht gegeben!</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Wie wird die soziale Integration gewährleistet?</label>
+                            <input type="text" id="antragSozial" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2 text-sm text-gray-800 placeholder-gray-400" placeholder="Aktiv im lokalen Sportverein und regelmässige Teilnahme an organisierten Aktivitäten">
+                        </div>
+                        <button onclick="generateLetterPrompt()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm py-2 rounded-lg transition-colors cursor-pointer">
+                            Motivationsschreiben-Prompt generieren
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UNTERMENÜ: Schritt-für-Schritt Fahrplan für Eltern (Titelbalken farblich hervorgehoben) -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <button onclick="toggleAccordion()" class="w-full bg-blue-950 p-4 font-bold text-left text-white hover:bg-blue-900 transition-colors flex justify-between items-center cursor-pointer shadow-sm">
+                    <span class="text-lg">🗺️ Der saubere Fahrplan zum Erfolg: To-Do-Liste für Eltern</span>
+                    <span id="accordionIcon" class="transform transition-transform duration-200">▼</span>
+                </button>
+                <div id="accordionContent" class="p-6 space-y-4 border-t border-gray-100">
+                    <p class="text-sm text-gray-600">Damit der Antrag beim Berner Inspektorat ohne Verzögerung oder Rückfragen durchgeht, sollten Eltern folgende Schritte zwingend einhalten:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <h4 class="font-bold text-blue-900 mb-2">1. Formelle Vorbereitung</h4>
+                            <ul class="list-disc pl-4 space-y-1 text-gray-700 text-xs">
+                                <li>Merkblatt auf der BKD-Schulaufsichtsseite genau durchlesen.</li>
+                                <li>Vertrag mit der anleitenden Lehrperson (Mentorat) schriftlich fixieren.</li>
+                                <li>Zulässige Lehrmittel im Schulverlag heraussuchen.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <h4 class="font-bold text-blue-900 mb-2">2. Dossier-Erstellung</h4>
+                            <ul class="list-disc pl-4 space-y-1 text-gray-700 text-xs">
+                                <li>Wochenplan-Prompt (Reiter 1) an Gemini senden und Tabelle ausdrucken.</li>
+                                <li>Motivationsschreiben-Prompt generieren und Brief finalisieren.</li>
+                                <li>Gesuchsformular der BKD vollständig ausfüllen.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <h4 class="font-bold text-blue-900 mb-2">3. Einreichung & Fristen</h4>
+                            <ul class="list-disc pl-4 space-y-1 text-gray-700 text-xs">
+                                <li>Unterlagen gesammelt an die zuständige Gemeinde/Schulleitung schicken.</li>
+                                <li>Kopien für das kantonale Schulinspektorat bereithalten.</li>
+                                <li>Fristen beachten (mindestens 2-3 Monate vor Schuljahres-/Semesterbeginn).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Offizieller Footer mit Urheberschutz -->
+    <footer class="bg-gray-900 text-gray-400 py-6 text-center text-sm border-t border-gray-800 w-full mt-12">
+        <div class="max-w-6xl mx-auto px-4">
+            <p class="font-medium text-gray-300">&copy; <span id="currentYear"></span> Alexander Patrick Siegenthaler. Alle Rechte vorbehalten.</p>
+            <p class="text-xs text-gray-500 mt-1">Entwickelt für die Region Schweiz / Kanton Bern gemäss den Richtlinien des Lehrplans 21.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Setzt das aktuelle Jahr im Footer automatisch
+        document.getElementById('currentYear').innerText = new Date().getFullYear();
+
+        const pensen = {
+            1: { lektionen: "20 - 24", zeit: "ca. 3 bis 3.5 Stunden" },
+            2: { lektionen: "20 - 24", zeit: "ca. 3 bis 3.5 Stunden" },
+            3: { lektionen: "27 - 31", zeit: "ca. 4.5 Stunden" },
+            4: { lektionen: "27 - 31", zeit: "ca. 4.5 Stunden" },
+            5: { lektionen: "27 - 31", zeit: "ca. 4.5 Stunden" },
+            6: { lektionen: "27 - 31", zeit: "ca. 4.5 Stunden" },
+            7: { lektionen: "32 - 35", zeit: "ca. 6 bis 7 Stunden" },
+            8: { lektionen: "32 - 35", zeit: "ca. 6 bis 7 Stunden" },
+            9: { lektionen: "32 - 35", zeit: "ca. 6 bis 7 Stunden" }
+        };
+
+        const standardGesetz = "VSG2.2. 3. Sie fördert das physische, psychische und soziale Wohlbefinden der Schülerinnen und Schüler und schützt ihre seelisch-geistige und körperliche Integrität. Sie sorgt für ein Klima von Achtung und Vertrauen. * ist nicht gegeben!";
+
+        function switchTab(tab) {
+            const btnPlaner = document.getElementById('tab-planer');
+            const btnAntrag = document.getElementById('tab-antrag');
+            
+            if(tab === 'planer') {
+                document.getElementById('content-planer').classList.remove('hidden');
+                document.getElementById('content-antrag').classList.add('hidden');
+                
+                // Klassen für aktiven Planer-Tab
+                btnPlaner.className = "flex-1 py-3 px-6 font-bold text-center rounded-xl transition-all duration-200 text-lg shadow-sm cursor-pointer bg-blue-950 text-white border border-blue-900";
+                btnAntrag.className = "flex-1 py-3 px-6 font-bold text-center rounded-xl transition-all duration-200 text-lg shadow-sm cursor-pointer bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-blue-950";
+            } else {
+                document.getElementById('content-planer').classList.add('hidden');
+                document.getElementById('content-antrag').classList.remove('hidden');
+                
+                // Klassen für aktiven Antrags-Tab
+                btnPlaner.className = "flex-1 py-3 px-6 font-bold text-center rounded-xl transition-all duration-200 text-lg shadow-sm cursor-pointer bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-blue-950";
+                btnAntrag.className = "flex-1 py-3 px-6 font-bold text-center rounded-xl transition-all duration-200 text-lg shadow-sm cursor-pointer bg-blue-950 text-white border border-blue-900";
+            }
+        }
+
+        function toggleAccordion() {
+            const content = document.getElementById('accordionContent');
+            const icon = document.getElementById('accordionIcon');
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function updateInfo() {
+            const klasse = document.getElementById('klasse').value;
+            document.getElementById('lblKlasse').innerText = klasse;
+            document.getElementById('infoLektionen').innerText = pensen[klasse].lektionen + " Lektionen";
+            document.getElementById('infoZeit').innerText = pensen[klasse].zeit;
+            generatePrompt();
+        }
+
+        function generatePrompt() {
+            const schueler = document.getElementById('schuelerName').value || "Max Muster";
+            const lehrer = document.getElementById('lehrpersonName').value || "[Name eintragen]";
+            const klasse = document.getElementById('klasse').value;
+            const quartal = document.getElementById('quartal').value;
+            let themen = document.getElementById('themen').value;
+            
+            if(!themen) themen = `Allgemeine Kompetenzbauten für die ${klasse}. Klasse gemäss Lehrplan 21.`;
+
+            const info = pensen[klasse];
+
+            const promptText = `Agiere als meine persönliche Assistenz im Bereich Unterrichtsentwicklung und Schulentwicklung im Kanton Bern. Ich bin eine diplomierte Lehrperson (mit Berner Lehrpatent) und begleite im Rahmen eines offiziellen Mentorats das Homeschooling-Projekt für den Schüler ${schueler} (${klasse}. Klasse). 
+
+Ich muss für die Bildungs- und Kulturdirektion (BKD) bzw. das zuständige Schulinspektorat ein rechtssicheres, pädagogisches Wochenkonzept einreichen, das exakt auf den Lehrplan 21 abgestimmt ist. Um meine Vorbereitungszeit effizient zu nutzen, brauche ich von dir einen detaillierten Entwurf, den ich anschliessend finalisiere.
+
+Hier sind die Eckdaten, die ich für meine Planung festgelegt habe:
+- Schüler: ${schueler} (${klasse}. Klasse, Kanton Bern)
+- Verantwortliche Lehrperson (Mentorat): ${lehrer}
+- Planungszeitraum: ${quartal}
+- Mein gesetzter Wochen-Fokus: ${themen}
+
+Bitte erstelle mir das Konzept nach folgenden professionellen Vorgaben:
+
+1. KANTONALE STUNDENTAFEL (BERN): Berechne die wöchentliche Gesamtlernzeit exakt nach den offiziellen Vorgaben der BKD für die ${klasse}. Primarklasse (${info.lektionen} Lektionen, aufgeteilt auf ${info.zeit} pro Tag). Verteile das Pensum sinnvoll auf Vormittags- und Nachmittagsblöcke von Montag bis Freitag. Es gibt keine fixen schulfreien Nachmittage.
+
+2. DIDAKTISCHE MATRIX: Erstelle eine strukturierte Tabelle mit den Spalten: "Wochentag", "Zeiteinheit", "Fach (gemäss Berner Lektionentabelle)", "Thema/Inhalt", "Zeitaufwand (Minuten)", "Lernziele (inkl. spezifischem Lehrplan-21-Kompetenzcode)" und "Überfachliche Kompetenzen (personale/soziale/methodische)".
+
+3. WICHTIGE FORMULIERUNGSREGEL: Schreibe die Lernziele und Aktivitäten absolut schülerzentriert und handlungsorientiert. Beziehe dich immer direkt personalisiert auf den Schüler. Schreibe z.B.: "${schueler} erlernt...", "${schueler} analysiert..." oder "${schueler} reflektiert selbstständig seine Lösungswege", damit ich beim Inspektorat die individuelle Förderung sauber dokumentieren kann.
+
+4. QUALITÄTSSICHERUNG & REFLEXION: Integriere für ein musisch-kreatives Fach eine praxisnahe Einheit. Füge am Ende ein kurzes, standardisiertes Reflexionsblatt für ${schueler} sowie ein Feld für meine mentorielle Rückmeldung und die Visumskontrolle der Eltern an, um den kantonalen Dokumentationspflichten vollumfänglich zu entsprechen.`;
+
+            document.getElementById('promptOutput').innerText = promptText;
+        }
+
+        function copyPrompt() {
+            const text = document.getElementById('promptOutput').innerText;
+            navigator.clipboard.writeText(text);
+            alert("Prompt wurde erfolgreich in die Zwischenablage kopiert!");
+        }
+
+        function sendToGemini() {
+            const text = document.getElementById('promptOutput').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                window.open('https://gemini.google.com', '_blank');
+            });
+        }
+
+        function generateLetterPrompt() {
+            const schueler = document.getElementById('schuelerName').value || "Max Muster";
+            let grund = document.getElementById('antragGrund').value;
+            const sozial = document.getElementById('antragSozial').value || "Aktiv im lokalen Sportverein und regelmässige Teilnahme an organisierten Aktivitäten";
+            
+            // Interaktive Kontrollabfrage für den rechtlichen Satz
+            if (grund.trim() === standardGesetz) {
+                const useStandard = confirm("Möchtest du den exemplarischen Gesetzessatz (VSG Art. 2 Abs. 3) als Begründung verwenden?");
+                if (!useStandard) {
+                    const customGrund = prompt("Bitte gib den alternativen Grund für das Homeschooling ein:");
+                    if (customGrund && customGrund.trim() !== "") {
+                        grund = customGrund;
+                        document.getElementById('antragGrund').value = customGrund;
+                    } else {
+                        alert("Generierung abgebrochen oder leeres Feld. Der Prompt wird nicht aktualisiert.");
+                        return;
+                    }
+                }
+            }
+
+            const letterPrompt = `Agiere als Rechts- und Pädagogik-Experte für das Volksschulwesen im Kanton Bern. Schreibe mir ein professionelles, amtstaugliches Motivationsschreiben für das Schulinspektorat zur Bewilligung von Homeschooling.
+Schüler: ${schueler}
+Pädagogischer Hauptgrund (Bezugnahme auf Volksschulgesetz): ${grund}
+Nachweis der sozialen Kontakte/Integration: ${sozial}
+Formuliere das Schreiben höflich, bestimmt, sachlich fundiert und nimm Bezug auf das Wohl des Kindes sowie den Respekt gegenüber dem kantonalen Lehrplan 21. Es darf in keiner Weise nach KI klingen, sondern muss von engagierten Eltern verfasst worden sein.`;
+            
+            document.getElementById('promptOutput').innerText = letterPrompt;
+            switchTab('planer');
+            alert("Der Prompt für das Motivationsschreiben wurde generiert und im Textfeld platziert!");
+        }
+
+        console.log("System v2.8 initialized. Navigation contrast updated. Subwindow styling fixed. Intellectual Property secured by Alexander Patrick Siegenthaler.");
+
+        window.onload = function() {
+            updateInfo();
+            // To-Do-Fahrplan standardmässig einklappen
+            document.getElementById('accordionContent').classList.add('hidden');
+        };
+    </script>
+</body>
+</html>
